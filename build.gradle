@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group 'com.skoobalon.photoshop'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.10
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+    testCompile group: 'org.testng', name: 'testng', version: '6.10'
+}
