@@ -8,31 +8,13 @@ import com.skoobalon.photoshop.util.ResourcePackUtil;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Scanner;
 
-public class Extract {
-    private static final String DEFAULT_OUTPUT_PATH = System.getProperty("user.home") + File.separator + "Pictures" + File.separator + "Adobe";
-    private static final String DEFAULT_PS_PATH = "C:\\Program Files\\Adobe\\Adobe Photoshop CC 2018\\Resources\\";
+public class Extract extends AbstractCli {
 
     public static void main(String[] args) throws Exception {
-        // Prompt for Photoshop path
-        final Scanner scanner = new Scanner(System.in);
-        System.out.println("Photoshop path is currently: " + DEFAULT_PS_PATH);
-        System.out.println("If this is correct, press [Enter], otherwise type it in below");
-        String psPath = scanner.nextLine();
-        psPath = psPath.trim().length() == 0 ? DEFAULT_PS_PATH : psPath.trim();
-
-        // Prompt for output path
-        System.out.println("Output path is currently: " + DEFAULT_OUTPUT_PATH);
-        System.out.println("If this is correct, press [Enter], otherwise type it in below");
-        String outputPath = scanner.nextLine();
-        outputPath = outputPath.trim().length() == 0 ? DEFAULT_OUTPUT_PATH : outputPath.trim();
-
-        // Ask if overwriting files is okay
-        System.out.println("By default I will overwrite preexisting files. If this is alright, press [Enter],\n" +
-                "otherwise type \"no\" below.");
-        String temp = scanner.nextLine();
-        final boolean overwrite = temp.trim().length() == 0;
+        final String psPath = promptForPhotoshopPath() + File.separator + RESOURCE_DIR;
+        final String outputPath = promptForOutputPath();
+        final boolean overwrite = promptForOverwrite();
 
         // Read all data
         System.out.println("Reading data...");
