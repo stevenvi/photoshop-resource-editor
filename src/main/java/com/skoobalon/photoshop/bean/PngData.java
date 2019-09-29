@@ -13,6 +13,10 @@ public class PngData {
         this.data = Arrays.copyOf(other.getData(), other.getData().length);
     }
 
+    public PngData(byte[] data) {
+        this.data = Arrays.copyOf(data, data.length);
+    }
+
     public byte[] getData() {
         return data;
     }

@@ -7,9 +7,11 @@ import com.skoobalon.photoshop.codec.PngDataCodec;
 import com.skoobalon.photoshop.util.ResourcePackUtil;
 
 import java.io.File;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 public class Extract extends AbstractCli {
+    private static final PngDataCodec pngCodec = new PngDataCodec();
 
     public static void main(String[] args) throws Exception {
         final String psPath = promptForPhotoshopPath() + File.separator + RESOURCE_DIR;
@@ -18,51 +20,64 @@ public class Extract extends AbstractCli {
 
         // Read all data
         System.out.println("Reading data...");
-        final ResourcePack rp = ResourcePackUtil.read(psPath);
-        System.out.println(String.format("Read %s low res pngs", rp.getLoresDatafile().getPngs().size()));
-        System.out.println(String.format("Read %s high res pngs", rp.getHiresDatafile().getPngs().size()));
+        final ResourcePack res = ResourcePackUtil.read(psPath);
+        System.out.println(String.format("Read %s low res pngs", res.getLoresDatafile().getPngs().size()));
+        System.out.println(String.format("Read %s high res pngs", res.getHiresDatafile().getPngs().size()));
+
+        try {
+            ResourcePackUtil.verifyConsistency(res);
+        } catch (Exception e) {
+            System.out.println("Consistency check failed. (This is not critical.)");
+        }
 
         // Create directories if needed
         final File loresPath = new File(outputPath + File.separator + "lores");
         final File hiresPath = new File(outputPath + File.separator + "hires");
-        if (!loresPath.exists()) {
-            System.out.print("Creating " + loresPath.getAbsolutePath() + "...");
-            System.out.println(loresPath.mkdirs() ? " done" : " failed");
-        }
-        if (!hiresPath.exists()) {
-            System.out.print("Creating " + hiresPath.getAbsolutePath() + "...");
-            System.out.println(hiresPath.mkdirs() ? " done" : " failed");
-        }
+        createPath(loresPath);
+        createPath(hiresPath);
 
         // Export all pngs
         System.out.println("Exporting data...");
-        final PngDataCodec pngCodec = new PngDataCodec();
-        int loresCount = 0;
-        int hiresCount = 0;
-        for (Map.Entry<String, ImageMetadata> entry : rp.getIndex().getImageMetadata().entrySet()) {
-            final PngData lores = rp.getLoresDatafile().getPngs().get(entry.getValue().getOffsetLo());
-            final PngData hires = rp.getHiresDatafile().getPngs().get(entry.getValue().getOffsetHi());
+        final Set<Integer> loresImagesWritten = new HashSet<>();
+        final Set<Integer> hiresImagesWritten = new HashSet<>();
+        for (Map.Entry<String, ImageMetadata> entry : res.getIndex().getImageMetadata().entrySet()) {
+            PngData lores = res.getLoresDatafile().getPngs().get(entry.getValue().getOffsetLo());
             if (lores != null) {
+                loresImagesWritten.add(entry.getValue().getOffsetLo());
                 final File f = new File(loresPath.getAbsolutePath() + File.separator + entry.getKey() + ".png");
-                if (f.exists() && !overwrite) {
-                    System.err.println("Skipping " + f.getAbsolutePath() + " because it already exists");
-                } else {
-                    pngCodec.serializeToFile(lores, f.getAbsolutePath());
-                    loresCount++;
-                }
+                writePng(f, lores, overwrite);
             }
+            PngData hires = res.getHiresDatafile().getPngs().get(entry.getValue().getOffsetHi());
             if (hires != null) {
+                hiresImagesWritten.add(entry.getValue().getOffsetHi());
                 final File f = new File(hiresPath.getAbsolutePath() + File.separator + entry.getKey() + ".png");
-                if (f.exists() && !overwrite) {
-                    System.err.println("Skipping " + f.getAbsolutePath() + " because it already exists");
-                } else {
-                    pngCodec.serializeToFile(hires, f.getAbsolutePath());
-                    hiresCount++;
-                }
+                writePng(f, hires, overwrite);
             }
         }
 
-        System.out.println("\nOutput " + loresCount + " lores images and " + hiresCount + " hires images");
-        System.out.println("Enjoy!");
+        // Now export the ones that aren't actually referenced in the index
+        final Map<Integer, PngData> loresNotReferenced = new HashMap<>(res.getLoresDatafile().getPngs());
+        loresImagesWritten.forEach(loresNotReferenced::remove);
+        for (Map.Entry<Integer, PngData> entry : loresNotReferenced.entrySet()) {
+            final File f = new File(String.format("%s%s%08d.png", loresPath.getAbsolutePath(), File.separator, entry.getKey()));
+            writePng(f, entry.getValue(), overwrite);
+        }
+
+        final Map<Integer, PngData> hiresNotReferenced = new HashMap<>(res.getHiresDatafile().getPngs());
+        hiresImagesWritten.forEach(hiresNotReferenced::remove);
+        for (Map.Entry<Integer, PngData> entry : hiresNotReferenced.entrySet()) {
+            final File f = new File(String.format("%s%s%08d.png", hiresPath.getAbsolutePath(), File.separator, entry.getKey()));
+            writePng(f, entry.getValue(), overwrite);
+        }
+
+        System.out.println("Done!");
+    }
+
+    private static void writePng(File f, PngData png, boolean overwrite) throws IOException {
+        if (f.exists() && !overwrite) {
+            System.err.println("Skipping " + f.getAbsolutePath() + " because it already exists");
+        } else {
+            pngCodec.serializeToFile(png, f.getAbsolutePath());
+        }
     }
 }

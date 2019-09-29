@@ -62,6 +62,13 @@ public final class ResourcePackUtil {
         metadata.setSizeLo(data.getData().length);
     }
 
+    /**
+     * Currently this is not functioning correctly. Do not use it until bugs can be fixed. Use the "smaller" version above instead.
+     * @param res
+     * @param pngName
+     * @param data
+     * @throws FileNotFoundException
+     */
     public static void replaceLoResPng(ResourcePack res, String pngName, PngData data) throws FileNotFoundException {
         // Verify a resource with this name exists in the codec
         final ImageMetadata metadata = res.getIndex().getImageMetadata().get(pngName);
@@ -106,6 +113,13 @@ public final class ResourcePackUtil {
         metadata.setSizeHi(data.getData().length);
     }
 
+    /**
+     * Currently this is not functioning correctly. Do not use it until bugs can be fixed. Use the "smaller" version above instead.
+     * @param res
+     * @param pngName
+     * @param data
+     * @throws FileNotFoundException
+     */
     public static void replaceHiResPng(ResourcePack res, String pngName, PngData data) throws FileNotFoundException {
         // Verify a resource with this name exists in the codec
         final ImageMetadata metadata = res.getIndex().getImageMetadata().get(pngName);
@@ -133,6 +147,10 @@ public final class ResourcePackUtil {
                 });
     }
 
+    /**
+     * Checks if the index and datafiles are consistent with each other
+     * @param res
+     */
     public static void verifyConsistency(ResourcePack res) {
         final List<Integer> offsetsLo = res.getLoresDatafile().getPngs().keySet().stream().sorted().collect(Collectors.toList());
         final List<Integer> offsetsHi = res.getHiresDatafile().getPngs().keySet().stream().sorted().collect(Collectors.toList());
@@ -160,7 +178,7 @@ public final class ResourcePackUtil {
         }
 
         // TODO: HiRes too
-
+        // need to refactor how the data is stored so that code doesn't need to be duplicated
     }
 
 }
