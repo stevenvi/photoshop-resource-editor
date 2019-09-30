@@ -59,7 +59,7 @@ public class DatafileCodec implements Codec<Datafile> {
         while (data.length > 12) {
             // Find the first and next instance of the PNG header
             int start = Bytes.indexOf(data, PNG_HEADER);
-            int end = Bytes.indexOf(data, PNG_FOOTER) + PNG_FOOTER.length;
+            int end = Bytes.indexOf(data, PNG_FOOTER) + PNG_FOOTER.length + 4;
 
             // Rip it out
             final PngData png = new PngData();
